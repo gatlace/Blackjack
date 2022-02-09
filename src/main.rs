@@ -1,9 +1,11 @@
 #![allow(dead_code)]
-mod generators;
 mod games;
+mod generators;
 mod inputs;
 
+use games::card_games::blackjack::*;
+
 fn main() {
-    let player = games::card_games::blackjack::Player::new();
-    println!("{:?}", player);
+    let mut game = Game::new();
+    game.do_round();
 }
