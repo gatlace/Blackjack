@@ -10,6 +10,7 @@ pub mod blackjack {
         hand: Vec<Card>,
         bet: usize,
         bank: usize,
+        bust: bool,
         third_round: bool,
     }
 
@@ -23,6 +24,7 @@ pub mod blackjack {
                 hand: Vec::new(),
                 bet: 0,
                 bank: 500,
+                bust: false,
                 third_round: false,
             }
         }
@@ -52,6 +54,14 @@ pub mod blackjack {
 
             value
         }
+        /// returns true if dealer's hand <= player's hand <= 21
+        pub fn eval_cards(&mut self, dealer: &Dealer) {
+            if self.hand_value() > dealer.hand_value() {
+                if self.hand_value() > 21 {
+                    self.bust = true;
+                }
+            }
+        }
     }
 
     pub struct Dealer {
@@ -72,6 +82,24 @@ pub mod blackjack {
                 player.hand.push(self.deck.pop().unwrap());
                 self.hand.push(self.deck.pop().unwrap());
             }
+        }
+
+        pub fn hand_value(&self) -> i8 {
+            let mut value: i8 = 0;
+            let mut first_ace = false;
+            for card in self.hand.iter() {
+                if card.value == 1 {
+                    if first_ace == false {
+                        first_ace = true;
+                        value += 11;
+                        continue;
+                    } else {
+                        value += card.value;
+                    }
+                }
+                value += card.value;
+            }
+            value
         }
     }
 
@@ -94,7 +122,7 @@ pub mod blackjack {
 
             let rounds = get_usize("How many rounds? ") as i8;
             println!("");
-            
+
             Game {
                 dealer: Dealer::new(),
                 players: vec_players,
@@ -115,6 +143,10 @@ pub mod blackjack {
             println!("Dealing cards...\n");
             for _ in 0..2 {
                 self.dealer.deal_cards(&mut self.players);
+            }
+
+            for player in self.players.iter() {
+                print_cards(&player.hand);
             }
 
             for player in self.players.iter_mut() {

@@ -30,19 +30,14 @@ pub fn get_usize(prompt: &str) -> usize {
 
 /// returns a bool
 pub fn get_bool(prompt: &str) -> bool {
-    let mut input: String;
-
     loop {
-        match get_string(prompt)
-            .to_lowercase()
-            .as_str()
-        {
+        match get_string(prompt).to_lowercase().as_str() {
             "y" | "yes" => break true,
             "n" | "no" => break false,
             _ => {
-                    println!("Error: y/es or n/o");
-                    continue;
-                }
+                println!("Error: y/es or n/o");
+                continue;
+            }
         }
     }
 }
