@@ -130,6 +130,10 @@ pub mod blackjack {
             }
         }
 
+        pub fn dealer_is_higher(player: &Player, dealer: &Dealer) -> bool {
+            dealer.hand_value() > player.hand_value()
+        }
+
         pub fn do_round(&mut self) {
             if self.dealer.deck.len() < 11 {
                 println!("Reshuffling Deck...");
@@ -151,6 +155,19 @@ pub mod blackjack {
 
             for player in self.players.iter_mut() {
                 print_cards(&player.hand);
+            }
+
+            let mut r3: Vec<Player> = Vec::new();
+            for player in self.players.iter_mut() {
+                player.third_round = get_bool("Would you like a third card?");
+                if player.third_round == true {
+                    r3.push(player.clone())
+                }
+                else {
+                    if Game::dealer_is_higher(player, &self.dealer) {
+                        
+                    }
+                }
             }
         }
     }
