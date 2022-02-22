@@ -7,5 +7,5 @@ use games::card_games::blackjack::*;
 
 fn main() {
     let mut game = Game::new();
-    game.do_round();
+    game.do_game();
 }

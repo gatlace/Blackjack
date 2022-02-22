@@ -10,7 +10,6 @@ pub mod blackjack {
         hand: Vec<Card>,
         bet: usize,
         bank: usize,
-        bust: bool,
         third_round: bool,
     }
 
@@ -24,7 +23,6 @@ pub mod blackjack {
                 hand: Vec::new(),
                 bet: 0,
                 bank: 500,
-                bust: false,
                 third_round: false,
             }
         }
@@ -54,11 +52,20 @@ pub mod blackjack {
 
             value
         }
-        /// returns true if dealer's hand <= player's hand <= 21
-        pub fn eval_cards(&mut self, dealer: &Dealer) {
-            if self.hand_value() > dealer.hand_value() {
-                if self.hand_value() > 21 {
-                    self.bust = true;
+        /// returns true if dealer's hand <= player's hand <= 21 or dealer's hand > 21
+        pub fn eval_cards(&mut self, dealer: &Dealer) -> bool {
+            if dealer.hand_value() > 21 {
+                true
+            }
+            else if self.hand_value() > 21 {
+                false
+            }
+            else {
+                if self.hand_value() > dealer.hand_value() {
+                    true
+                }
+                else {
+                    false
                 }
             }
         }
@@ -80,8 +87,8 @@ pub mod blackjack {
         pub fn deal_cards(&mut self, players: &mut Vec<Player>) {
             for player in players.iter_mut() {
                 player.hand.push(self.deck.pop().unwrap());
-                self.hand.push(self.deck.pop().unwrap());
             }
+            self.hand.push(self.deck.pop().unwrap());
         }
 
         pub fn hand_value(&self) -> i8 {
@@ -130,10 +137,6 @@ pub mod blackjack {
             }
         }
 
-        pub fn dealer_is_higher(player: &Player, dealer: &Dealer) -> bool {
-            dealer.hand_value() > player.hand_value()
-        }
-
         pub fn do_round(&mut self) {
             if self.dealer.deck.len() < 11 {
                 println!("Reshuffling Deck...");
@@ -150,24 +153,68 @@ pub mod blackjack {
             }
 
             for player in self.players.iter() {
-                print_cards(&player.hand);
-            }
-
-            for player in self.players.iter_mut() {
+                println!("{}'S HAND(value: {})", player.name.to_uppercase(), player.hand_value());
                 print_cards(&player.hand);
             }
 
             let mut r3: Vec<Player> = Vec::new();
             for player in self.players.iter_mut() {
                 player.third_round = get_bool("Would you like a third card?");
+                println!("");
                 if player.third_round == true {
                     r3.push(player.clone())
-                }
-                else {
-                    if Game::dealer_is_higher(player, &self.dealer) {
-                        
+                } else {
+                    if player.eval_cards(&self.dealer) == true {
+                        player.bank += player.bet * 2;
+                        player.bet = 0;
+                        println!("You win!");
+                        println!("YOUR HAND:(value: {})", player.hand_value());
+                        print_cards(&player.hand);
+                        println!("DEALER HAND:(value: {})", self.dealer.hand_value());
+                        print_cards(&self.dealer.hand);
+                    }
+                    else {
+                        player.bet = 0;
+                        println!("You lose!");
+                        println!("YOUR HAND:(value: {})", player.hand_value());
+                        print_cards(&player.hand);
+                        println!("DEALER HAND:(value: {})", self.dealer.hand_value());
+                        print_cards(&self.dealer.hand);
                     }
                 }
+            }
+
+            self.dealer.deal_cards(&mut r3);
+            for player in r3.iter_mut() {
+                if player.eval_cards(&self.dealer) == true {
+                    player.bank += player.bet * 2;
+                    player.bet = 0;
+                    println!("You win!");
+                    println!("YOUR HAND:(value: {})", player.hand_value());
+                    print_cards(&player.hand);
+                    println!("DEALER HAND:(value: {})", self.dealer.hand_value());
+                    print_cards(&self.dealer.hand);
+                }
+                else { 
+                    player.bet = 0;
+                    println!("You lose!");
+                    println!("YOUR HAND:(value: {})", player.hand_value());
+                    print_cards(&player.hand);
+                    println!("DEALER HAND:(value: {})", self.dealer.hand_value());
+                    print_cards(&self.dealer.hand);
+                }
+            }
+
+            for player in self.players.iter_mut() {
+                player.hand.clear();
+            }
+            self.dealer.hand.clear();
+        }
+
+        pub fn do_game(&mut self) {
+            for _ in 0..self.rounds { self.do_round() }
+            for player in self.players.iter() {
+                println!("{}'S BANK: ${}", player.name.to_uppercase(), player.bank);
             }
         }
     }

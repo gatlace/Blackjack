@@ -38,6 +38,7 @@ pub fn print_cards(deck: &Vec<Card>) {
     for card in deck.iter() {
         println!("{}", card);
     }
+    println!("");
 }
 
 pub fn new_sorted_deck() -> Vec<Card> {
