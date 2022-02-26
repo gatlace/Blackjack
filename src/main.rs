@@ -3,7 +3,7 @@ mod games;
 mod generators;
 mod inputs;
 
-use games::card_games::blackjack::*;
+use games::blackjack::*;
 
 fn main() {
     let mut game = Game::new();

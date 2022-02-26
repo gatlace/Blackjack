@@ -1,1 +1,1 @@
-pub mod card_games;
+pub mod blackjack;
