@@ -3,9 +3,8 @@ mod games;
 mod generators;
 mod inputs;
 
-use games::blackjack::*;
+use games::blackjack;
 
 fn main() {
-    let mut game = Game::new();
-    game.do_game();
+    blackjack::do_game();
 }

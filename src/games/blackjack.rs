@@ -207,12 +207,12 @@ impl Game {
         }
         self.dealer.hand.clear();
     }
+}
 
-    pub fn do_game() {
-        let game = Game::new();
-        for _ in 0..game.rounds { game.do_round() }
-        for player in game.players.iter() {
-            println!("{}'S BANK: ${}", player.name.to_uppercase(), player.bank);
-        }
+pub fn do_game() {
+    let mut game = Game::new();
+    for _ in 0..game.rounds { game.do_round() }
+    for player in game.players.iter() {
+        println!("{}'S BANK: ${}", player.name.to_uppercase(), player.bank);
     }
 }
