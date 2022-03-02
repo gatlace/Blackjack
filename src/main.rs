@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 mod games;
 mod generators;
-mod inputs;
+mod base;
 
 use games::blackjack;
 
