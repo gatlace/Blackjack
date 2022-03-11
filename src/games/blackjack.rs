@@ -1,5 +1,5 @@
 use crate::generators::cards::*;
-use crate::inputs::*;
+use crate::base::inputs::*;
 
 #[derive(Clone, Debug)]
 pub struct Player {
@@ -24,11 +24,11 @@ impl Player {
         }
     }
 
-    pub fn place_bet(&mut self) {
+    fn place_bet(&mut self) {
         loop {
             println!("BANK: {}", self.bank);
             println!("--------");
-            let bet = get_usize("What would you like to bet?: ");
+            let bet = get_usize(&format!("{}, What would you like to bet?: ", self.name.to_uppercase()));
             if bet > self.bank {
                 println!("Error: your bet cannot be bigger than your bank");
                 continue;
@@ -81,10 +81,8 @@ impl Dealer {
         }
     }
 
-    pub fn deal_cards(&mut self, players: &mut Vec<Player>) {
-        for player in players.iter_mut() {
-            player.hand.push(self.deck.pop().unwrap());
-        }
+    pub fn deal_cards(&mut self, player: &mut Player) {
+        player.hand.push(self.deck.pop().unwrap());
         self.hand.push(self.deck.pop().unwrap());
     }
 
@@ -108,45 +106,41 @@ impl Dealer {
 }
 
 pub struct Game {
-    players: Vec<Player>,
+    player: Player,
     dealer: Dealer,
     rounds: i8,
 }
 
 impl Game {
     pub fn new() -> Game {
-        let num_players = get_usize("how many players? ");
-        let mut vec_players: Vec<Player> = Vec::with_capacity(num_players);
-        println!("");
-
-        for _ in 1..=num_players {
-            vec_players.push(Player::new());
-            println!("");
-        }
+        // TODO: hashmap that maps casino players to blackjack players
+        // Have the blackjack player do all the work and pass the winnings(or losses lol)
+        // on to update the player
+        
+        let player = Player::new();
 
         let rounds = get_usize("How many rounds? ") as i8;
         println!("");
 
         Game {
             dealer: Dealer::new(),
-            players: vec_players,
+            player: player,
             rounds: rounds,
         }
     }
-
+    // TODO: one player games, pub display function
     pub fn do_round(&mut self) {
         if self.dealer.deck.len() < 11 {
             println!("Reshuffling Deck...");
             self.dealer.deck = new_random_deck();
         }
 
-        for player in &mut self.players {
-            player.place_bet();
-        }
+        self.player.place_bet();
+
 
         println!("Dealing cards...\n");
         for _ in 0..2 {
-            self.dealer.deal_cards(&mut self.players);
+            self.dealer.deal_cards(&mut self.player);
         }
 
         for player in self.players.iter() {
@@ -156,7 +150,7 @@ impl Game {
 
         let mut r3: Vec<Player> = Vec::new();
         for player in self.players.iter_mut() {
-            player.third_round = get_bool("Would you like a third card?");
+            player.third_round = get_bool(&format!("{}, Would you like a third card?", player.name.to_uppercase()));
             println!("");
             if player.third_round == true {
                 r3.push(player.clone())
