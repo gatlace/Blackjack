@@ -9,7 +9,6 @@ fn main() {
     blackjack::do_game();
 }
 
-
 //TODO:
 // - save player data with a csv file
 // - craps

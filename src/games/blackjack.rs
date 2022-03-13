@@ -1,5 +1,5 @@
-use crate::generators::cards::*;
 use crate::base::inputs::*;
+use crate::generators::cards::*;
 
 #[derive(Clone, Debug)]
 pub struct Player {
@@ -28,7 +28,10 @@ impl Player {
         loop {
             println!("BANK: {}", self.bank);
             println!("--------");
-            let bet = get_usize(&format!("{}, What would you like to bet?: ", self.name.to_uppercase()));
+            let bet = get_usize(&format!(
+                "{}, What would you like to bet?: ",
+                self.name.to_uppercase()
+            ));
             if bet > self.bank {
                 println!("Error: your bet cannot be bigger than your bank");
                 continue;
@@ -48,23 +51,6 @@ impl Player {
         }
 
         value
-    }
-    /// returns true if dealer's hand <= player's hand <= 21 or dealer's hand > 21
-    pub fn eval_cards(&mut self, dealer: &Dealer) -> bool {
-        if dealer.hand_value() > 21 {
-            true
-        }
-        else if self.hand_value() > 21 {
-            false
-        }
-        else {
-            if self.hand_value() > dealer.hand_value() {
-                true
-            }
-            else {
-                false
-            }
-        }
     }
 }
 
@@ -116,19 +102,16 @@ impl Game {
         // TODO: hashmap that maps casino players to blackjack players
         // Have the blackjack player do all the work and pass the winnings(or losses lol)
         // on to update the player
-        
-        let player = Player::new();
 
-        let rounds = get_usize("How many rounds? ") as i8;
-        println!("");
+        let player = Player::new();
 
         Game {
             dealer: Dealer::new(),
             player: player,
-            rounds: rounds,
+            rounds: 0,
         }
     }
-    // TODO: one player games, pub display function
+    // TODO: pub display function to display multiple players' cards on the table
     pub fn do_round(&mut self) {
         if self.dealer.deck.len() < 11 {
             println!("Reshuffling Deck...");
@@ -137,76 +120,94 @@ impl Game {
 
         self.player.place_bet();
 
-
         println!("Dealing cards...\n");
         for _ in 0..2 {
             self.dealer.deal_cards(&mut self.player);
         }
 
-        for player in self.players.iter() {
-            println!("{}'S HAND(value: {})", player.name.to_uppercase(), player.hand_value());
-            print_cards(&player.hand);
-        }
+        println!(
+            "{}'S HAND(value: {})",
+            self.player.name,
+            self.player.hand_value()
+        );
+        print_cards(&self.player.hand);
 
-        let mut r3: Vec<Player> = Vec::new();
-        for player in self.players.iter_mut() {
-            player.third_round = get_bool(&format!("{}, Would you like a third card?", player.name.to_uppercase()));
-            println!("");
-            if player.third_round == true {
-                r3.push(player.clone())
-            } else {
-                if player.eval_cards(&self.dealer) == true {
-                    player.bank += player.bet * 2;
-                    player.bet = 0;
-                    println!("You win!");
-                    println!("YOUR HAND:(value: {})", player.hand_value());
-                    print_cards(&player.hand);
-                    println!("DEALER HAND:(value: {})", self.dealer.hand_value());
-                    print_cards(&self.dealer.hand);
-                }
-                else {
-                    player.bet = 0;
-                    println!("You lose!");
-                    println!("YOUR HAND:(value: {})", player.hand_value());
-                    print_cards(&player.hand);
-                    println!("DEALER HAND:(value: {})", self.dealer.hand_value());
-                    print_cards(&self.dealer.hand);
-                }
+        self.player.third_round = get_bool(&format!(
+            "{}, Would you like a third card?",
+            self.player.name
+        ));
+        println!("");
+        match self.player.third_round {
+            false => {
+                Game::determine_winner(&mut self.player, &mut self.dealer);
+            }
+            true => {
+                self.dealer.deal_cards(&mut self.player);
+                Game::determine_winner(&mut self.player, &mut self.dealer)
             }
         }
+        self.player.hand.clear();
+        self.dealer.hand.clear();
+    }
 
-        self.dealer.deal_cards(&mut r3);
-        for player in r3.iter_mut() {
-            if player.eval_cards(&self.dealer) == true {
+    fn determine_winner(player: &mut Player, dealer: &mut Dealer) {
+        let player_won = {
+            if dealer.hand_value() > 21 {
+                true
+            }
+            else if player.hand_value() > 21 {
+                false
+            }
+            else {
+                if player.hand_value() > dealer.hand_value() {
+                    true
+                }
+                else {
+                    false
+                }
+            }
+        };
+
+        match player_won {
+            true => {
                 player.bank += player.bet * 2;
                 player.bet = 0;
                 println!("You win!");
                 println!("YOUR HAND:(value: {})", player.hand_value());
                 print_cards(&player.hand);
-                println!("DEALER HAND:(value: {})", self.dealer.hand_value());
-                print_cards(&self.dealer.hand);
-            }
-            else { 
+                println!("DEALER HAND:(value: {})", dealer.hand_value());
+                print_cards(&dealer.hand);
+            },
+            false => {
                 player.bet = 0;
                 println!("You lose!");
                 println!("YOUR HAND:(value: {})", player.hand_value());
                 print_cards(&player.hand);
-                println!("DEALER HAND:(value: {})", self.dealer.hand_value());
-                print_cards(&self.dealer.hand);
+                println!("DEALER HAND:(value: {})", dealer.hand_value());
+                print_cards(&dealer.hand);
             }
         }
-
-        for player in self.players.iter_mut() {
-            player.hand.clear();
-        }
-        self.dealer.hand.clear();
     }
 }
 
 pub fn do_game() {
     let mut game = Game::new();
-    for _ in 0..game.rounds { game.do_round() }
-    for player in game.players.iter() {
-        println!("{}'S BANK: ${}", player.name.to_uppercase(), player.bank);
+    game.do_round();
+    game.rounds += 1;
+
+    loop {
+        match get_bool("Would you like to quit? y/es | n/o") {
+            false => game.do_round(),
+            true => { 
+                match game.player.bank > 500 {
+                    true => { println!("Congrats! You won {} this session!", game.player.bank - 500)},
+                    false => {
+                        println!("Oh no! Better luck next time! You lost {} this session.", 500 - game.player.bank);
+                        break;
+                    }
+                }
+             }
+        }
     }
+
 }
